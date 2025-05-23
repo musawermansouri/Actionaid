@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Action Aid Committee - Excel Style Dark Mode Table</title>
+<style>
+  /* Dark mode + reset */
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0; padding: 0;
+    background: #121212;
+    color: #e0e0e0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+  a {
+    color: #82cfff;
+    text-decoration: none;
+  }
+  a:hover {
+    text-decoration: underline;
+  }
+
+  /* Header bar */
+  header {
+    background: #1f1f1f;
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    user-select: none;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    box-shadow: 0 2px 5px #0008;
+  }
+
+  header h1 {
+    font-weight: 700;
+    font-size: 20px;
+    margin: 0;
+    color: #82cfff;
+    flex-grow: 1;
+  }
+
+  /* Search bar */
+  #searchInput {
+    background: #222;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 14px;
+    font-size: 14px;
+    color: #eee;
+    width: 280px;
+    transition: background 0.3s;
+  }
+  #searchInput::placeholder {
+    color: #666;
+  }
+  #searchInput:focus {
+    outline: none;
+    background: #333;
+  }
+
+  /* Dropdown menu */
+  .dropdown {
+    position: relative;
+  }
+  .dropdown button {
+    background: #222;
+    border: none;
+    color: #eee;
+    font-size: 14px;
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .dropdown button:hover, .dropdown button:focus {
+    background: #444;
+  }
+  .dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #222;
+    min-width: 150px;
+    box-shadow: 0 6px 10px #000b;
+    border-radius: 6px;
+    margin-top: 6px;
+    z-index: 20;
+  }
+  .dropdown-content button {
+    color: #eee;
+    padding: 10px 14px;
+    text-align: left;
+    border: none;
+    width: 100%;
+    background: none;
+    cursor: pointer;
+    font-size: 14px;
+    border-bottom: 1px solid #444;
+  }
+  .dropdown-content button:last-child {
+    border-bottom: none;
+  }
+  .dropdown-content button:hover {
+    background-color: #555;
+  }
+  .dropdown.show .dropdown-content {
+    display: block;
+  }
+
+  /* Main container */
+  .container {
+    max-width: 1200px;
+    margin: 30px auto 50px;
+    background: #1a1a1a;
+    border-radius: 10px;
+    box-shadow: 0 6px 20px #000d;
+    padding: 20px;
+    overflow-x: auto;
+  }
+
+  /* Table */
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 700px;
+  }
+
+  thead {
+    background: #2a2a2a;
+    user-select: none;
+  }
+
+  th, td {
+    border: 1px solid #333;
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 14px;
+    max-width: 280px;
+    vertical-align: middle;
+  }
+
+  th {
+    background: #333;
+    cursor: pointer;
+    position: relative;
+    color: #82cfff;
+  }
+
+  th.sort-asc::after,
+  th.sort-desc::after {
+    content: "";
+    position: absolute;
+    right: 10px;
+    font-size: 14px;
+  }
+  th.sort-asc::after {
+    content: "▲";
+    color: #82cfff;
+  }
+  th.sort-desc::after {
+    content: "▼";
+    color: #82cfff;
+  }
+
+  tbody tr:hover {
+    background: #222;
+  }
+
+  /* Editable cells styling */
+  td[contenteditable="true"] {
+    background-color: #2e2e2e;
+    outline: none;
+    border-radius: 4px;
+    transition: background-color 0.15s ease;
+  }
+  td[contenteditable="true"]:focus {
+    background-color: #4a90e2;
+    color: #fff;
+  }
+
+  /* Buttons */
+  button.main-action {
+    background-color: #2979ff;
+    border: none;
+    color: white;
+    padding: 10px 18px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    margin: 10px 0 0 0;
+    transition: background-color 0.3s;
+  }
+  button.main-action:hover {
+    background-color: #1c54b2;
+  }
+
+  /* Info text */
+  .info-text {
+    font-size: 13px;
+    color: #888;
+    margin-top: 12px;
+    font-style: italic;
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 800px) {
+    #searchInput {
+      width: 180px;
+    }
+    table {
+      min-width: 600px;
+    }
+  }
+
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Action Aid Committee</h1>
+  <input id="searchInput" type="search" placeholder="Search members..." aria-label="Search Committee Members" />
+
+  <div class="dropdown" id="dataDropdown">
+    <button aria-haspopup="true" aria-expanded="false" id="dataMenuBtn">Data ▼</button>
+    <div class="dropdown-content" role="menu" aria-labelledby="dataMenuBtn">
+      <button id="createTableBtn" role="menuitem">Create New Table</button>
+      <button id="loadTableBtn" role="menuitem">Load Saved Table</button>
+      <button id="clearStorageBtn" role="menuitem">Clear Saved Data</button>
+            <a href="my.html" role="menuitem" class="dropdown-content-link">Community Tables</a>
+
+    </div>
+  </div>
+
+</header>
+
+<main>
+  <div class="container">
+    <div id="tableContainer">
+      <!-- Table will be injected here -->
+    </div>
+    <button class="main-action" id="saveTableBtn" title="Save your table">Save Table Data</button>
+
+    <p class="info-text">You can paste data from Excel or CSV. Use "Create New Table" to start fresh.</p>
+  </div>
+</main>
+
+<script>
+  // === State ===
+  let committeeData = [];  // array of row objects
+  let currentSort = { column: null, order: 'asc' };
+
+  const columns = [
+    { key: 'firstName', label: 'First Name' },
+    { key: 'lastName', label: 'Last Name' },
+    { key: 'role', label: 'Role' },
+    { key: 'languages', label: 'Language Expertise' },
+    { key: 'email', label: 'Contact Email' }
+  ];
+
+  // DOM elements
+  const tableContainer = document.getElementById('tableContainer');
+  const searchInput = document.getElementById('searchInput');
+  const saveBtn = document.getElementById('saveTableBtn');
+  const createBtn = document.getElementById('createTableBtn');
+  const loadBtn = document.getElementById('loadTableBtn');
+  const clearStorageBtn = document.getElementById('clearStorageBtn');
+  const dataDropdown = document.getElementById('dataDropdown');
+  const dataMenuBtn = document.getElementById('dataMenuBtn');
+
+  // Show/hide dropdown
+  dataMenuBtn.onclick = () => {
+    dataDropdown.classList.toggle('show');
+    dataMenuBtn.setAttribute('aria-expanded', dataDropdown.classList.contains('show'));
+  };
+  window.onclick = e => {
+    if (!dataDropdown.contains(e.target)) {
+      dataDropdown.classList.remove('show');
+      dataMenuBtn.setAttribute('aria-expanded', 'false');
+    }
+  };
+
+  // Create empty row template
+  function emptyRow() {
+    return {
+      firstName: '',
+      lastName: '',
+      role: '',
+      languages: '',
+      email: ''
+    };
+  }
+
+  // Render table
+  function renderTable(data) {
+    if (!data.length) {
+      tableContainer.innerHTML = '<p style="color:#888; text-align:center;">No data available. Use "Create New Table" to start.</p>';
+      return;
+    }
+    let html = '<table aria-label="Committee Data Table">';
+    html += '<thead><tr>';
+    columns.forEach(col => {
+      html += `<th data-key="${col.key}" tabindex="0" role="columnheader" aria-sort="none">${col.label}</th>`;
+    });
+    html += '</tr></thead><tbody>';
+    data.forEach((row, idx) => {
+      html += '<tr>';
+      columns.forEach(col => {
+        // Make cells contenteditable for editing
+        html += `<td contenteditable="true" data-row="${idx}" data-key="${col.key}" aria-label="${col.label} editable cell">${escapeHtml(row[col.key])}</td>`;
+      });
+      html += '</tr>';
+    });
+    html += '</tbody></table>';
+    tableContainer.innerHTML = html;
+
+    addTableEventListeners();
+  }
+
+  // Escape HTML to prevent injection
+  function escapeHtml(text) {
+    if (!text) return '';
+    return text.replace(/[&<>"']/g, function(m) {
+      return {'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'}[m];
+    });
+  }
+  saveBtn.onclick = () => {
+  localStorage.setItem('committeeData', JSON.stringify(committeeData));
+  alert('Table data saved.');
+};
+
+
+  // Add event listeners for editing and sorting
+  function addTableEventListeners() {
+    // Editable cells
+    const cells = tableContainer.querySelectorAll('td[contenteditable="true"]');
+    cells.forEach(cell => {
+      cell.addEventListener('input', onCellEdit);
+    });
+
+    // Sorting on header click
+    const headers = tableContainer.querySelectorAll('th');
+    headers.forEach(header => {
+      header.addEventListener('click', onHeaderClick);
+      header.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onHeaderClick.call(header, e);
+        }
+      });
+    });
+  }
+
+  // Handle cell edit - update committeeData
+  function onCellEdit(e) {
+    const td = e.target;
+    const rowIndex = parseInt(td.getAttribute('data-row'));
+    const key = td.getAttribute('data-key');
+    if (committeeData[rowIndex]) {
+      committeeData[rowIndex][key] = td.innerText.trim();
+    }
+  }
+
+  // Sorting function
+  function onHeaderClick(e) {
+    const key = this.getAttribute('data-key');
+    let order = 'asc';
+    if (currentSort.column === key) {
+      order = currentSort.order === 'asc' ? 'desc' : 'asc';
+    }
+    currentSort = { column: key, order: order };
+    sortTable(key, order);
+    renderTable(filteredData());
+    updateSortIndicators();
+  }
+
+  function sortTable(key, order) {
+    committeeData.sort((a, b) => {
+      let v1 = (a[key] || '').toLowerCase();
+      let v2 = (b[key] || '').toLowerCase();
+      if (v1 < v2) return order === 'asc' ? -1 : 1;
+      if (v1 > v2) return order === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }
+   // Sorting logic
+function onHeaderClick(e) {
+  const key = e.target.getAttribute('data-key');
+  if (!key) return;
+
+  if (currentSort.column === key) {
+    currentSort.order = currentSort.order === 'asc' ? 'desc' : 'asc';
+  } else {
+    currentSort.column = key;
+    currentSort.order = 'asc';
+  }
+
+  committeeData.sort((a, b) => {
+    const valA = a[key].toLowerCase();
+    const valB = b[key].toLowerCase();
+    if (valA < valB) return currentSort.order === 'asc' ? -1 : 1;
+    if (valA > valB) return currentSort.order === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  renderTable(committeeData);
+  updateSortIndicators();
+}
+
+function updateSortIndicators() {
+  const headers = tableContainer.querySelectorAll('th');
+  headers.forEach(th => {
+    th.classList.remove('sort-asc', 'sort-desc');
+    const key = th.getAttribute('data-key');
+    if (key === currentSort.column) {
+      th.classList.add(`sort-${currentSort.order}`);
+    }
+  });
+}
+
+// Handle cell edits
+function onCellEdit(e) {
+  const rowIdx = e.target.getAttribute('data-row');
+  const key = e.target.getAttribute('data-key');
+  if (rowIdx !== null && key) {
+    committeeData[rowIdx][key] = e.target.textContent.trim();
+  }
+}
+
+// Create new table
+createBtn.addEventListener('click', () => {
+  committeeData = [];
+  for (let i = 0; i < 5; i++) {
+    committeeData.push(emptyRow());
+  }
+  renderTable(committeeData);
+});
+
+// Save table
+saveBtn.addEventListener('click', () => {
+  localStorage.setItem('my.html', JSON.stringify(my.html));
+  alert('Table saved successfully.');
+});
+
+// Load saved table
+loadBtn.addEventListener('click', () => {
+  const saved = localStorage.getItem('committeeTable');
+  if (saved) {
+    committeeData = JSON.parse(saved);
+    renderTable(my.html);
+  } else {
+    alert('No saved table found.');
+  }
+});
+
+// Clear storage
+clearStorageBtn.addEventListener('click', () => {
+  localStorage.removeItem('committeeTable');
+  alert('Saved table cleared.');
+});
+
+// Search functionality
+searchInput.addEventListener('input', () => {
+  const term = searchInput.value.toLowerCase();
+  const filtered = committeeData.filter(row => {
+    return Object.values(row).some(val => val.toLowerCase().includes(term));
+  });
+  renderTable(filtered);
+});
+
+// Auto-load table if saved
+window.addEventListener('DOMContentLoaded', () => {
+  const saved = localStorage.getItem('committeeTable');
+  if (saved) {
+    committeeData = JSON.parse(saved);
+    renderTable(committeeData);
+  }
+});
+
+  // Update ARIA and visual sort arrows
+  function updateSortIndicators() {
+    const headers = tableContainer.querySelectorAll('th');
+    headers.forEach(th => {
+      const key = th.getAttribute('data-key');
+      th.classList.remove('sort-asc', 'sort-desc');
+      th.setAttribute('aria-sort', 'none');
+      if (currentSort.column === key) {
+        th.classList.add(currentSort.order === 'asc' ? 'sort-asc' : 'sort-desc');
+        th.setAttribute('aria-sort', currentSort.order === 'asc' ? 'ascending' : 'descending');
+      }
+    });
+  }
+
+  // Filter data by search input
+  function filteredData() {
+    const term = searchInput.value.trim().toLowerCase();
+    if (!term) return committeeData;
+    return committeeData.filter(row => {
+      return columns.some(col => (row[col.key] || '').toLowerCase().includes(term));
+    });
+  }
+  createBtn.onclick = () => {
+  committeeData = [emptyRow()];
+  renderTable(committeeData);
+};
+loadBtn.onclick = () => {
+  const data = localStorage.getItem('committeeData');
+  if (data) {
+    committeeData = JSON.parse(data);
+    renderTable(committeeData);
+  } else {
+    alert('No saved data found.');
+  }
+};
+
+clearStorageBtn.onclick = () => {
+  localStorage.removeItem('committeeData');
+  alert('Saved data cleared.');
+};
+function onCellEdit(e) {
+  const cell = e.target;
+  const rowIdx = parseInt(cell.dataset.row, 10);
+  const key = cell.dataset.key;
+  committeeData[rowIdx][key] = cell.innerText.trim();
+}
+function onHeaderClick(e) {
+  const key = e.currentTarget.dataset.key;
+  let order = 'asc';
+
+  if (currentSort.column === key) {
+    order = currentSort.order === 'asc' ? 'desc' : 'asc';
+  }
+
+  committeeData.sort((a, b) => {
+    const valA = a[key].toLowerCase();
+    const valB = b[key].toLowerCase();
+
+    if (valA < valB) return order === 'asc' ? -1 : 1;
+    if (valA > valB) return order === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  currentSort = { column: key, order };
+
+  renderTable(committeeData);
+  // Add visual indicator
+  document.querySelectorAll('th').forEach(th => {
+    th.classList.remove('sort-asc', 'sort-desc');
+  });
+  const sortedHeader = document.querySelector(`th[data-key="${key}"]`);
+  sortedHeader.classList.add(order === 'asc' ? 'sort-asc' : 'sort-desc');
+}
+
+
+  // Handle search input
+  searchInput.addEventListener('input', () => {
+    renderTable(filteredData());
+    updateSortIndicators();
+  });
+
+  // Save data to localStorage
+  saveBtn.addEventListener('click', () => {
+    if (!committeeData.length) {
+      alert('No data to save!');
+      return;
+    }
+    localStorage.setItem('committeeData', JSON.stringify(committeeData));
+    alert('Table data saved locally.');
+  });
+
+  // Create new empty table with 10 rows for starting
+  createBtn.addEventListener('click', () => {
+    if (confirm('Create a new empty table? Unsaved changes will be lost.')) {
+      committeeData = [];
+      for (let i=0; i<10; i++) committeeData.push(emptyRow());
+      searchInput.value = '';
+      currentSort = {column: null, order: 'asc'};
+      renderTable(committeeData);
+    }
+    dataDropdown.classList.remove('show');
+    dataMenuBtn.setAttribute('aria-expanded', 'false');
+  });
+
+  // Load saved table
+  loadBtn.addEventListener('click', () => {
+    const saved = localStorage.getItem('committeeData');
+    if (!saved) {
+      alert('No saved table found!');
+      return;
+    }
+    committeeData = JSON.parse(saved);
+    searchInput.value = '';
+    currentSort = {column: null, order: 'asc'};
+    renderTable(committeeData);
+    dataDropdown.classList.remove('show');
+    dataMenuBtn.setAttribute('aria-expanded', 'false');
+  });
+
+  // Clear saved data
+  clearStorageBtn.addEventListener('click', () => {
+    if (confirm('Clear all saved table data?')) {
+      localStorage.removeItem('committeeData');
+      alert('Saved data cleared.');
+    }
+    dataDropdown.classList.remove('show');
+    dataMenuBtn.setAttribute('aria-expanded', 'false');
+  });
+
+  // Paste data handler to split pasted text (e.g. from Excel or CSV)
+  tableContainer.addEventListener('paste', e => {
+    e.preventDefault();
+    const paste = (e.clipboardData || window.clipboardData).getData('text');
+    if (!paste) return;
+
+    // Split pasted text by new lines and tabs/commas
+    const rows = paste.trim().split(/\r?\n/);
+    let newRows = [];
+    rows.forEach(rowStr => {
+      // Split by tab or comma, limit columns to 5
+      let cells = rowStr.split(/\t|,/).slice(0, columns.length);
+      // Pad cells if fewer columns
+      while (cells.length < columns.length) cells.push('');
+      let obj = {};
+      columns.forEach((col,i) => {
+        obj[col.key] = cells[i].trim();
+      });
+      newRows.push(obj);
+    });
+
+    // Append new rows to committeeData
+    committeeData = committeeData.concat(newRows);
+    renderTable(filteredData());
+    updateSortIndicators();
+  });
+
+  // Initialize app
+  (function init(){
+    // Try to load saved data or create empty table
+    let saved = localStorage.getItem('committeeData');
+    if (saved) {
+      committeeData = JSON.parse(saved);
+    } else {
+      for (let i=0; i<10; i++) committeeData.push(emptyRow());
+    }
+    renderTable(committeeData);
+  })();
+</script>
+
+</body>
+</html>
